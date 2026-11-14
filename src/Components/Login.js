@@ -1,11 +1,28 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Header from "./Header";
+import { checkValidData } from "../Utils/validate";
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  const email = useRef(null);
+  const password = useRef(null);
+  const username = useRef(null);
+
+  const handleButtonClick = () => {
+    const message = checkValidData(
+      email.current.value,
+      password.current.value,
+      isSignInForm ? undefined : username.current.value
+    );
+
+    setErrorMessage(message);
+  };
 
   const toggleSignInForm = () => {
     setIsSignInForm((isSignIn) => !isSignIn);
+    setErrorMessage(null);
   };
 
   return (
@@ -25,6 +42,7 @@ const Login = () => {
         <form
           className="h-fit w-full max-w-[450px] rounded bg-black/75 px-8 py-12 sm:px-[60px] sm:py-[60px]"
           onSubmit={(event) => event.preventDefault()}
+          noValidate
         >
           <h1 className="mb-6 text-3xl font-bold">
             {isSignInForm ? "Sign In" : "Sign Up"}
@@ -39,6 +57,7 @@ const Login = () => {
                 <input
                   className="w-full rounded bg-neutral-800 px-5 py-4 text-base placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white"
                   id="full-name"
+                  ref={username}
                   name="name"
                   type="text"
                   placeholder="Full name"
@@ -54,6 +73,7 @@ const Login = () => {
               <input
                 className="w-full rounded bg-neutral-800 px-5 py-4 text-base placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white"
                 id="email"
+                ref={email}
                 name="email"
                 type="email"
                 placeholder="Email address"
@@ -68,6 +88,7 @@ const Login = () => {
               <input
                 className="w-full rounded bg-neutral-800 px-5 py-4 text-base placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white"
                 id="password"
+                ref={password}
                 name="password"
                 type="password"
                 placeholder="Password"
@@ -76,9 +97,16 @@ const Login = () => {
             </div>
           </div>
 
+          {errorMessage && (
+            <p className="mt-4 text-sm font-semibold text-red-500" role="alert">
+              {errorMessage}
+            </p>
+          )}
+
           <button
             className="mt-10 w-full rounded bg-[#e50914] py-3 font-semibold hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             type="submit"
+            onClick={handleButtonClick}
           >
             {isSignInForm ? "Sign In" : "Sign Up"}
           </button>
