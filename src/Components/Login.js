@@ -1,6 +1,12 @@
 import { useRef, useState } from "react";
 import Header from "./Header";
 import { checkValidData } from "../Utils/validate";
+import { getAuthErrorMessage } from "../Utils/authErrors";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "../Utils/firebase";
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
@@ -14,10 +20,45 @@ const Login = () => {
     const message = checkValidData(
       email.current.value,
       password.current.value,
-      isSignInForm ? undefined : username.current.value
+      isSignInForm ? undefined : username.current.value,
     );
 
     setErrorMessage(message);
+    if (message) return;
+
+    if (!isSignInForm) {
+      //Sign Up Logic
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value,
+      ) //API to authenticate email and password
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          console.log(user);
+          // ...
+        })
+        .catch((error) => {
+          setErrorMessage(getAuthErrorMessage(error.code));
+        });
+    } else {
+      //Sign In Logic
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value,
+      )
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+          console.log(user);
+          // ...
+        })
+        .catch((error) => {
+          setErrorMessage(getAuthErrorMessage(error.code));
+        });
+    }
   };
 
   const toggleSignInForm = () => {
@@ -92,13 +133,18 @@ const Login = () => {
                 name="password"
                 type="password"
                 placeholder="Password"
-                autoComplete={isSignInForm ? "current-password" : "new-password"}
+                autoComplete={
+                  isSignInForm ? "current-password" : "new-password"
+                }
               />
             </div>
           </div>
 
           {errorMessage && (
-            <p className="mt-4 text-sm font-semibold text-red-500" role="alert">
+            <p
+              className="mt-4 rounded border-l-4 border-red-500 bg-red-950/80 p-3 text-sm leading-relaxed text-red-100"
+              role="alert"
+            >
               {errorMessage}
             </p>
           )}
