@@ -1,16 +1,22 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import Header from "./Header";
 import { checkValidData } from "../Utils/validate";
 import { getAuthErrorMessage } from "../Utils/authErrors";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 import { auth } from "../Utils/firebase";
+import { addUser } from "../Utils/userSlice";
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const email = useRef(null);
   const password = useRef(null);
@@ -28,16 +34,23 @@ const Login = () => {
 
     if (!isSignInForm) {
       //Sign Up Logic
+      const name = username.current.value.trim();
+
       createUserWithEmailAndPassword(
         auth,
         email.current.value,
         password.current.value,
       ) //API to authenticate email and password
-        .then((userCredential) => {
-          // Signed up
-          const user = userCredential.user;
-          console.log(user);
-          // ...
+        .then(async (userCredential) => {
+          await updateProfile(userCredential.user, {
+            displayName: name,
+            photoURL: "https://avatars.githubusercontent.com/u/89186319?v=4",
+          });
+
+          // The auth listener may have run before the profile was updated.
+          const { uid, email, displayName, photoURL } = userCredential.user;
+          dispatch(addUser({ uid, email, displayName, photoURL }));
+          navigate("/browse");
         })
         .catch((error) => {
           setErrorMessage(getAuthErrorMessage(error.code));
@@ -49,11 +62,8 @@ const Login = () => {
         email.current.value,
         password.current.value,
       )
-        .then((userCredential) => {
-          // Signed in
-          const user = userCredential.user;
-          console.log(user);
-          // ...
+        .then(() => {
+          navigate("/browse");
         })
         .catch((error) => {
           setErrorMessage(getAuthErrorMessage(error.code));
